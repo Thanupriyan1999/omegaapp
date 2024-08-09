@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "689030170470",
+    "project_id": "omega-952de",
+    "storage_bucket": "omega-952de.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:689030170470:android:392cc4432c58874ae1aaa7",
+        "android_client_info": {
+          "package_name": "com.example.omega2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBwdDWSS-IXiRVFGUjcePd3Pswo5DLupM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
