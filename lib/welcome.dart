@@ -84,7 +84,7 @@ class _WelcomePageState extends State<WelcomePage> {
             decoration: BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                  'https://as1.ftcdn.net/v2/jpg/01/29/75/62/1000_F_129756209_jzrdjAiwfZjqsN2kZ49hkoRHkVfO3Wnc.jpg', // Example background image URL
+                  'https://as2.ftcdn.net/v2/jpg/06/33/27/09/1000_F_633270910_NcK1JCWzqyul9b189PKabKp2o4PqpVKX.jpg', // Example background image URL
                 ),
                 fit: BoxFit.cover,
               ),
@@ -169,7 +169,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.orangeAccent,
+                    color: const Color.fromARGB(255, 43, 8, 238),
                   ),
                 ),
                 Text(
