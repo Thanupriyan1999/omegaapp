@@ -247,12 +247,12 @@ class _WelcomePageState extends State<WelcomePage> {
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blueAccent,
-          minimumSize: Size(150, 50),
+          minimumSize: Size(30, 30),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: const Text('Report', style: TextStyle(fontSize: 25)),
+        child: const Text('►', style: TextStyle(fontSize: 25)),
       ),
     );
   }
