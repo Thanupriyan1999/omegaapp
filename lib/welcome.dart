@@ -84,7 +84,7 @@ class _WelcomePageState extends State<WelcomePage> {
             decoration: BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                  'https://as2.ftcdn.net/v2/jpg/06/33/27/09/1000_F_633270910_NcK1JCWzqyul9b189PKabKp2o4PqpVKX.jpg', // Example background image URL
+                  'https://t4.ftcdn.net/jpg/03/15/56/21/240_F_315562154_IHPB75WqP42YzXarrHYasro0Q0VQUbad.jpg', // Example background image URL
                 ),
                 fit: BoxFit.cover,
               ),
@@ -113,7 +113,7 @@ class _WelcomePageState extends State<WelcomePage> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 100),
                       Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,15 +142,15 @@ class _WelcomePageState extends State<WelcomePage> {
           Text(
             'Omega Line Vavuniya',
             style: TextStyle(
-              fontSize: 50,
+              fontSize: 70 ,
               fontWeight: FontWeight.bold,
-              color: Colors.blue.shade900,
+              color: const Color.fromARGB(255, 65, 32, 109),
               fontFamily: 'Lobster',
               shadows: [
                 Shadow(
-                  blurRadius: 10.0,
+                  blurRadius: 30.0,
                   color: Colors.black38,
-                  offset: Offset(2.0, 2.0),
+                  offset: Offset(5.0, 5.0),
                 ),
               ],
             ),
@@ -167,7 +167,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 Text(
                   _mealType.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 35,
                     fontWeight: FontWeight.bold,
                     color: const Color.fromARGB(255, 43, 8, 238),
                   ),
@@ -194,7 +194,7 @@ class _WelcomePageState extends State<WelcomePage> {
         ElevatedButton(
           onPressed: () => _selectRating(text),
           style: ElevatedButton.styleFrom(
-            backgroundColor: _selectedRating == text ? Colors.blue.shade400 : color,
+            backgroundColor: _selectedRating == text ? const Color.fromARGB(255, 1, 9, 15) : color,
             minimumSize: Size(double.infinity, 60),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -267,8 +267,8 @@ class _WelcomePageState extends State<WelcomePage> {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.black87,
-        minimumSize: Size(50, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        minimumSize: Size(20, 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
       ),
       child: icon == null
           ? Text(label, style: TextStyle(fontSize: 25, color: Colors.white))
@@ -290,7 +290,7 @@ class _WelcomePageState extends State<WelcomePage> {
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color.fromARGB(255, 1, 6, 15),
-          minimumSize: Size(20, 20),
+          minimumSize: Size(10, 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
