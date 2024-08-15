@@ -140,9 +140,27 @@ class _WelcomePageState extends State<WelcomePage> {
       child: Column(
         children: [
           Text(
-            'Omega Line Vavuniya',
+            'Omega Line Vavuniya'
+            ,
             style: TextStyle(
-              fontSize: 70 ,
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
+              color: const Color.fromARGB(255, 65, 32, 109),
+              fontFamily: 'Lobster',
+              shadows: [
+                Shadow(
+                  blurRadius: 30.0,
+                  color: Colors.black38,
+                  offset: Offset(5.0, 5.0),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            'Food Rating'
+            ,
+            style: TextStyle(
+              fontSize: 30,
               fontWeight: FontWeight.bold,
               color: const Color.fromARGB(255, 65, 32, 109),
               fontFamily: 'Lobster',

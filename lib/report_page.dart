@@ -2,36 +2,77 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-class ReportPage extends StatelessWidget {
+class ReportPage extends StatefulWidget {
+  const ReportPage({super.key});
+
+  @override
+  _ReportPageState createState() => _ReportPageState();
+}
+
+class _ReportPageState extends State<ReportPage> {
+  DateTime selectedDate = DateTime.now();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Meal Feedback Report'),
+        title: const Text('Meal Feedback Report'),
         backgroundColor: Colors.teal,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            _buildBarChart(context, 'Breakfast'),
-            _buildBarChart(context, 'Lunch'),
-            _buildBarChart(context, 'Dinner'),
+            // Date Picker
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Select Date:",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: _selectDate,
+                  child: Text(
+                    "${selectedDate.toLocal()}".split(' ')[0],
+                    style: const TextStyle(fontSize: 18, color: Colors.teal),
+                  ),
+                ),
+              ],
+            ),
+            _buildBarChart(context, 'Breakfast', 80.0, 300.0),
+            _buildBarChart(context, 'Lunch', 80.0, 300.0),
+            _buildBarChart(context, 'Dinner', 80.0, 300.0),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBarChart(BuildContext context, String mealType) {
+  Future<void> _selectDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2101),
+    );
+    if (pickedDate != null && pickedDate != selectedDate) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    }
+  }
+
+  Widget _buildBarChart(BuildContext context, String mealType, double spacing, double chartHeight) {
     return FutureBuilder<QuerySnapshot>(
       future: FirebaseFirestore.instance
           .collection('feedback')
           .where('mealType', isEqualTo: mealType)
+          .where('date', isEqualTo: "${selectedDate.toLocal()}".split(' ')[0]) // Filter by date
           .get(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         final feedbackDocs = snapshot.data!.docs;
@@ -60,7 +101,7 @@ class ReportPage extends StatelessWidget {
                 color: _getBarColor(entry.key),
                 width: 20,
                 borderRadius: BorderRadius.circular(5),
-                borderSide: BorderSide(color: Colors.black, width: 1),
+                borderSide: const BorderSide(color: Colors.black, width: 1),
               ),
             ],
             showingTooltipIndicators: [0],
@@ -68,8 +109,8 @@ class ReportPage extends StatelessWidget {
         }).toList();
 
         return Card(
-          elevation: 5,
-          margin: const EdgeInsets.symmetric(vertical: 16),
+          elevation: 20,
+          margin: const EdgeInsets.symmetric(vertical: 20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -83,8 +124,9 @@ class ReportPage extends StatelessWidget {
                     color: Colors.teal[900],
                   ),
                 ),
+                SizedBox(height: spacing),
                 SizedBox(
-                  height: 300,
+                  height: chartHeight,
                   child: BarChart(
                     BarChartData(
                       barGroups: barGroups,
@@ -92,42 +134,41 @@ class ReportPage extends StatelessWidget {
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 40, // Reserve space to show labels fully
+                            reservedSize: 40,
                             getTitlesWidget: (double value, TitleMeta meta) {
                               return Padding(
                                 padding: const EdgeInsets.only(top: 10.0),
                                 child: Text(
                                   ratingCounts.keys.toList()[value.toInt()],
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.teal[700]),
+                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal[700]),
                                 ),
                               );
                             },
                           ),
                         ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false), // Hides the left titles
+                        leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
                         ),
-                        rightTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false), // Hides the right titles
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
                         ),
-                        topTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false), // Hides the top titles
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
                         ),
                       ),
                       borderData: FlBorderData(show: false),
-                      gridData: FlGridData(show: false),
+                      gridData: const FlGridData(show: false),
                       barTouchData: BarTouchData(
                         enabled: true,
                         touchTooltipData: BarTouchTooltipData(
-                          // tooltipBgColor: Colors.teal[800],
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
                             return BarTooltipItem(
                               '${ratingCounts.keys.toList()[group.x.toInt()]}\n',
-                              TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               children: <TextSpan>[
                                 TextSpan(
                                   text: '${rod.toY.toString()} feedback(s)',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.amberAccent,
                                     fontSize: 14,
                                   ),
@@ -151,32 +192,11 @@ class ReportPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                _buildRatingCountsAboveBars(ratingCounts),
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildRatingCountsAboveBars(Map<String, int> ratingCounts) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: ratingCounts.entries.map((entry) {
-        return Column(
-          children: [
-            Text(
-              entry.value.toString(),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              entry.key,
-              style: TextStyle(fontSize: 14, color: _getBarColor(entry.key)),
-            ),
-          ],
-        );
-      }).toList(),
     );
   }
 
