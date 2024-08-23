@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
 
   @override
-  _ReportPageState createState() => _ReportPageState();
+  ReportPageState createState() => ReportPageState();
 }
 
-class _ReportPageState extends State<ReportPage> {
-  DateTime selectedDate = DateTime.now();
+class ReportPageState extends State<ReportPage> {
+  DateTime _selectedDate = DateTime.now();
+  String _selectedMealType = 'Breakfast'; // Default to 'Breakfast'
 
   @override
   Widget build(BuildContext context) {
@@ -23,42 +25,64 @@ class _ReportPageState extends State<ReportPage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Date Picker
+            ElevatedButton(
+              onPressed: _pickDate,
+              child: Text(
+                'Select Date: ${DateFormat('yyyy-MM-dd').format(_selectedDate)}',
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
+            const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                const Text(
-                  "Select Date:",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                TextButton(
-                  onPressed: _selectDate,
-                  child: Text(
-                    "${selectedDate.toLocal()}".split(' ')[0],
-                    style: const TextStyle(fontSize: 18, color: Colors.teal),
+                ElevatedButton(
+                  onPressed: () => _updateSelectedMealType('Breakfast'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _selectedMealType == 'Breakfast' ? Colors.teal : Colors.grey,
                   ),
+                  child: const Text('Breakfast'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _updateSelectedMealType('Lunch'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _selectedMealType == 'Lunch' ? Colors.teal : Colors.grey,
+                  ),
+                  child: const Text('Lunch'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _updateSelectedMealType('Dinner'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _selectedMealType == 'Dinner' ? Colors.teal : Colors.grey,
+                  ),
+                  child: const Text('Dinner'),
                 ),
               ],
             ),
-            _buildBarChart(context, 'Breakfast', 80.0, 300.0),
-            _buildBarChart(context, 'Lunch', 80.0, 300.0),
-            _buildBarChart(context, 'Dinner', 80.0, 300.0),
+            const SizedBox(height: 20),
+            _buildBarChart(context, _selectedMealType, 80.0, 300.0),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _selectDate() async {
-    final DateTime? pickedDate = await showDatePicker(
+  void _updateSelectedMealType(String mealType) {
+    setState(() {
+      _selectedMealType = mealType;
+    });
+  }
+
+  Future<void> _pickDate() async {
+    DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2020),
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (pickedDate != null && pickedDate != selectedDate) {
+    if (picked != null && picked != _selectedDate) {
       setState(() {
-        selectedDate = pickedDate;
+        _selectedDate = picked;
       });
     }
   }
@@ -68,7 +92,7 @@ class _ReportPageState extends State<ReportPage> {
       future: FirebaseFirestore.instance
           .collection('feedback')
           .where('mealType', isEqualTo: mealType)
-          .where('date', isEqualTo: "${selectedDate.toLocal()}".split(' ')[0]) // Filter by date
+          .where('date', isEqualTo: DateFormat('yyyy-MM-dd').format(_selectedDate)) // Filter by selected date
           .get(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -124,9 +148,9 @@ class _ReportPageState extends State<ReportPage> {
                     color: Colors.teal[900],
                   ),
                 ),
-                SizedBox(height: spacing),
+                SizedBox(height: spacing), // Adjustable space between the heading and the chart
                 SizedBox(
-                  height: chartHeight,
+                  height: chartHeight,  // Adjustable chart height
                   child: BarChart(
                     BarChartData(
                       barGroups: barGroups,
@@ -134,7 +158,7 @@ class _ReportPageState extends State<ReportPage> {
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 40,
+                            reservedSize: 40, // Reserve space to show labels fully
                             getTitlesWidget: (double value, TitleMeta meta) {
                               return Padding(
                                 padding: const EdgeInsets.only(top: 10.0),
@@ -147,13 +171,13 @@ class _ReportPageState extends State<ReportPage> {
                           ),
                         ),
                         leftTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
+                          sideTitles: SideTitles(showTitles: false), // Hides the left titles
                         ),
                         rightTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
+                          sideTitles: SideTitles(showTitles: false), // Hides the right titles
                         ),
                         topTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
+                          sideTitles: SideTitles(showTitles: false), // Hides the top titles
                         ),
                       ),
                       borderData: FlBorderData(show: false),
