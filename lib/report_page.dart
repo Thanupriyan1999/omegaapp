@@ -240,4 +240,6 @@ class ReportPageState extends State<ReportPage> {
         return Colors.grey;
     }
   }
+  
+  DateFormat(String s) {}
 }
