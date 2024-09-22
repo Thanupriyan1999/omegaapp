@@ -14,6 +14,7 @@ class WelcomePageState extends State<WelcomePage> {
   final TextEditingController _employeeIdController = TextEditingController();
   String _mealType = 'Breakfast';
   String _selectedRating = '';
+  bool _isSubmitting = false; // Prevent multiple submissions
 
   @override
   void initState() {
@@ -27,34 +28,58 @@ class WelcomePageState extends State<WelcomePage> {
       setState(() {
         _mealType = 'Breakfast';
       });
-    } else if (hour >= 11 && hour < 17) {  // Adjusted to make Lunch end at 5 PM
+    } else if (hour >= 11 && hour < 19) {
       setState(() {
         _mealType = 'Lunch';
       });
-    } else if (hour >= 17 && hour < 23) {  // Dinner now ends at 11 PM
+    } else if (hour >= 19 && hour < 23) {
       setState(() {
         _mealType = 'Dinner';
       });
     } else {
       setState(() {
-        _mealType = 'Late Night';  // Optionally handle the time between 11 PM and 6 AM
+        _mealType = 'Late Night';
       });
     }
   }
 
+  Future<bool> _checkIfAlreadySubmitted(String employeeId, String currentDate) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('feedback')
+        .where('employeeId', isEqualTo: employeeId)
+        .where('mealType', isEqualTo: _mealType)
+        .where('date', isEqualTo: currentDate)
+        .get();
+
+    return querySnapshot.docs.isNotEmpty;
+  }
+
   Future<void> _saveData() async {
+    if (_isSubmitting) return; // Prevent multiple submissions
+    _isSubmitting = true; // Lock submission
+
     final employeeId = _employeeIdController.text;
     final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-    // Check if the employee ID is exactly 6 digits long
     if (employeeId.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Employee ID must be exactly 6 digits long.')),
       );
-      return; // Exit the function if the validation fails
+      _isSubmitting = false;
+      return;
     }
 
     if (_selectedRating.isNotEmpty) {
+      final alreadySubmitted = await _checkIfAlreadySubmitted(employeeId, currentDate);
+
+      if (alreadySubmitted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You have already submitted a rating for this meal today.')),
+        );
+        _isSubmitting = false;
+        return;
+      }
+
       try {
         await FirebaseFirestore.instance.collection('feedback').add({
           'employeeId': employeeId,
@@ -79,6 +104,8 @@ class WelcomePageState extends State<WelcomePage> {
         const SnackBar(content: Text('Please enter Employee ID and select a rating.')),
       );
     }
+
+    _isSubmitting = false; // Unlock submission
   }
 
   @override
@@ -91,50 +118,33 @@ class WelcomePageState extends State<WelcomePage> {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                  'https://img.freepik.com/free-photo/arrangement-raw-pasta-ingredients-with-copy-space_23-2148360832.jpg?t=st=1724153975~exp=1724157575~hmac=e15a70269573510c9c6a3f9f40c484d48bd46a09a4817c928128d72ad51663b0&w=996',
+                  'https://st3.depositphotos.com/2861195/14236/i/1600/depositphotos_142361642-stock-photo-blurred-food-background-colorful-dishes.jpg',
                 ),
                 fit: BoxFit.cover,
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(10.0),
             child: Column(
               children: [
                 _buildHeader(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 Expanded(
-                  child: Row(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Rating Buttons Column
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildRatingButton('Excellent', const Color.fromARGB(255, 52, 177, 104), 'assets/excellent.png'),
-                            _buildRatingButton('Good', Colors.lightGreen.shade700, 'assets/good.png'),
-                            _buildRatingButton('Average', const Color.fromARGB(255, 255, 241, 38), 'assets/average.png'),
-                            _buildRatingButton('Bad', const Color.fromARGB(255, 255, 147, 59), 'assets/bad.png'),
-                            _buildRatingButton('Very Bad', const Color.fromARGB(255, 255, 99, 99), 'assets/very_bad.png'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 100),
-                      // Employee ID and Keypad Column
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildEmployeeIdInput(), // Updated with save button
-                            const SizedBox(height: 20),
-                            _buildCustomNumberPad(),
-                          ],
-                        ),
-                      ),
+                      // Rating Buttons
+                      _buildRatingButtons(),
+                      const SizedBox(height: 20),
+                      // Employee ID Input and Keypad
+                      _buildEmployeeIdInput(),
+                      const SizedBox(height: 10),
+                      _buildCustomNumberPad(),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 _buildReportButton(),
               ],
             ),
@@ -155,15 +165,15 @@ class WelcomePageState extends State<WelcomePage> {
             Text(
               'Omega Line Vavuniya',
               style: TextStyle(
-                fontSize: 70,
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
                 color: const Color.fromARGB(255, 35, 64, 189),
                 fontFamily: 'Lobster',
                 shadows: const [
                   Shadow(
-                    blurRadius: 10.0,
-                    color: Color.fromARGB(193, 38, 164, 242),
-                    offset: Offset(5.0, 5.0),
+                    blurRadius: 40.0,
+                    color: Color.fromARGB(193, 7, 7, 7),
+                    offset: Offset(2.0, 2.0),
                   ),
                 ],
               ),
@@ -171,7 +181,7 @@ class WelcomePageState extends State<WelcomePage> {
             Text(
               _mealType.toUpperCase(),
               style: const TextStyle(
-                fontSize: 50,
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
@@ -180,7 +190,7 @@ class WelcomePageState extends State<WelcomePage> {
         ),
         // Calendar Date
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
           decoration: BoxDecoration(
             color: const Color.fromARGB(255, 171, 252, 248),
             borderRadius: BorderRadius.circular(10),
@@ -191,7 +201,7 @@ class WelcomePageState extends State<WelcomePage> {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 2, 14, 85).withOpacity(0.9),
+                  color: const Color.fromARGB(255, 2, 14, 85).withOpacity(0.7),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(10),
                   ),
@@ -199,17 +209,17 @@ class WelcomePageState extends State<WelcomePage> {
                 child: Text(
                   DateFormat('MMMM').format(DateTime.now()),
                   style: const TextStyle(
-                    fontSize: 30,
+                    fontSize: 20,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 1),
               Text(
                 DateFormat('dd').format(DateTime.now()),
                 style: const TextStyle(
-                  fontSize: 60,
+                  fontSize: 40,
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
@@ -217,6 +227,22 @@ class WelcomePageState extends State<WelcomePage> {
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildRatingButtons() {
+    return Column(
+      children: [
+        _buildRatingButton('Excellent', const Color.fromARGB(255, 52, 177, 104), 'assets/excellent.png'),
+        const SizedBox(height: 10),
+        _buildRatingButton('Good', Colors.lightGreen.shade700, 'assets/good.png'),
+        const SizedBox(height: 10),
+        _buildRatingButton('Average', const Color.fromARGB(255, 255, 241, 38), 'assets/average.png'),
+        const SizedBox(height: 10),
+        _buildRatingButton('Bad', const Color.fromARGB(255, 255, 147, 59), 'assets/bad.png'),
+        const SizedBox(height: 10),
+        _buildRatingButton('Very Bad', const Color.fromARGB(255, 255, 99, 99), 'assets/very_bad.png'),
       ],
     );
   }
@@ -229,30 +255,30 @@ class WelcomePageState extends State<WelcomePage> {
 
   Widget _buildRatingButton(String text, Color color, String imagePath) {
     return Padding(
-      padding: const EdgeInsets.only(right: 60),
+      padding: const EdgeInsets.only(right: 30),
       child: Row(
         children: [
           Expanded(
             child: ElevatedButton(
               onPressed: () => _selectRating(text),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _selectedRating == text 
-                    ? color.withOpacity(0.5) 
+                backgroundColor: _selectedRating == text
+                    ? color.withOpacity(0.5)
                     : color,
-                minimumSize: const Size(double.infinity, 80),
+                minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(
                 text,
-                style: const TextStyle(fontSize: 40, color: Colors.black),
+                style: const TextStyle(fontSize: 20, color: Colors.black),
               ),
             ),
           ),
-          const SizedBox(width: 40),
+          const SizedBox(width: 20),
           Image.asset(
             imagePath,
-            width: 90,
-            height: 90,
+            width: 80,
+            height: 60,
           ),
         ],
       ),
@@ -267,123 +293,96 @@ class WelcomePageState extends State<WelcomePage> {
             controller: _employeeIdController,
             decoration: InputDecoration(
               labelText: 'Enter Employee ID',
-              labelStyle: const TextStyle(fontSize: 35, color: Colors.black),
               border: const OutlineInputBorder(),
               fillColor: Colors.white.withOpacity(0.9),
               filled: true,
             ),
-            style: const TextStyle(fontSize: 35, color: Colors.black),
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.none,
+            style: const TextStyle(fontSize: 20, color: Colors.black),
+            keyboardType: TextInputType.number,
+            maxLength: 6, // Restrict to 6 digits
           ),
         ),
         const SizedBox(width: 10),
         ElevatedButton(
           onPressed: _saveData,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color.fromARGB(255, 34, 128, 215),
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 25),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            backgroundColor: const Color.fromARGB(255, 35, 64, 189),
+            minimumSize: const Size(60, 60),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          child: const Icon(
-            Icons.save,
-            size: 30,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.save, size: 40),
         ),
       ],
     );
   }
 
-  Widget _buildCustomNumberPad() {
-    return GridView.builder(
-      shrinkWrap: true,
-      itemCount: 12,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 2.5,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-      ),
-      itemBuilder: (context, index) {
-        if (index < 9) {
-          return _buildNumberButton((index + 1).toString());
-        } else if (index == 9) {
-          return _buildNumberButton('');
-        } else if (index == 10) {
-          return _buildNumberButton('0');
-        } else {
-          return _buildBackspaceButton();
-        }
-      },
+Widget _buildCustomNumberPad() {
+    return Column(
+      children: [
+        _buildNumberRow(['1', '2', '3']),
+        const SizedBox(height: 5),
+        _buildNumberRow(['4', '5', '6']),
+        const SizedBox(height: 5),
+        _buildNumberRow(['7', '8', '9']),
+        const SizedBox(height: 5),
+        _buildNumberRow(['', '0', '⌫']),
+      ],
+    );
+  }
+
+  Widget _buildNumberRow(List<String> numbers) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: numbers.map((number) {
+        return _buildNumberButton(number);
+      }).toList(),
     );
   }
 
   Widget _buildNumberButton(String number) {
     return ElevatedButton(
-      onPressed: number.isEmpty ? null : () => _addNumber(number),
+      onPressed: () {
+        if (number == '⌫') {
+          if (_employeeIdController.text.isNotEmpty) {
+            _employeeIdController.text = _employeeIdController.text
+                .substring(0, _employeeIdController.text.length - 1);
+          }
+        } else {
+          if (_employeeIdController.text.length < 6) {
+            _employeeIdController.text += number;
+          }
+        }
+      },
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color.fromARGB(255, 11, 22, 71),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        backgroundColor: const Color.fromARGB(255, 25, 25, 26),
+         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.all(5),
+        
       ),
       child: Text(
         number,
-        style: const TextStyle(fontSize: 40, color: Color.fromARGB(255, 255, 255, 255)),
+        style: const TextStyle(fontSize: 30, color: Colors.white),
       ),
     );
   }
 
-  Widget _buildBackspaceButton() {
-    return ElevatedButton(
-      onPressed: _removeLastDigit,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.redAccent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      child: const Icon(
-        Icons.backspace,
-        color: Colors.white,
-      ),
-    );
-  }
-
-  void _addNumber(String number) {
-    if (_employeeIdController.text.length < 6) {
-      setState(() {
-        _employeeIdController.text += number;
-      });
-    }
-  }
-
-  void _removeLastDigit() {
-    if (_employeeIdController.text.isNotEmpty) {
-      setState(() {
-        _employeeIdController.text = _employeeIdController.text.substring(0, _employeeIdController.text.length - 1);
-      });
-    }
-  }
 
   Widget _buildReportButton() {
     return Align(
       alignment: Alignment.bottomRight,
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ReportPage()), // Navigate to the ReportPage
+            MaterialPageRoute(builder: (context) => const ReportPage()),
           );
         },
+        icon: const Icon(Icons.pie_chart),
+        label: const Text('REPORT'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromARGB(255, 0, 100, 100),
-          minimumSize: const Size(10, 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: const Icon(
-          Icons.analytics,
-          color: Color.fromARGB(255, 255, 255, 255),
-          size: 40,
+          backgroundColor: const Color.fromARGB(255, 35, 64, 189),
+          minimumSize: const Size(150, 40),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         ),
       ),
     );

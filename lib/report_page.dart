@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:excel/excel.dart'; // Excel package for exporting data
+import 'dart:io'; // For file operations
+import 'package:path_provider/path_provider.dart'; // For getting external storage directory
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -13,6 +16,13 @@ class ReportPage extends StatefulWidget {
 class ReportPageState extends State<ReportPage> {
   DateTime _selectedDate = DateTime.now();
   String _selectedMealType = 'Breakfast'; // Default to 'Breakfast'
+  Map<String, int> ratingCounts = {
+    'Excellent': 0,
+    'Good': 0,
+    'Average': 0,
+    'Bad': 0,
+    'Very Bad': 0,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +71,12 @@ class ReportPageState extends State<ReportPage> {
             ),
             const SizedBox(height: 20),
             _buildBarChart(context, _selectedMealType, 80.0, 300.0),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _exportDataToExcel,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+              child: const Text('Export to Excel'),
+            ),
           ],
         ),
       ),
@@ -100,7 +116,7 @@ class ReportPageState extends State<ReportPage> {
         }
 
         final feedbackDocs = snapshot.data!.docs;
-        final Map<String, int> ratingCounts = {
+        ratingCounts = {
           'Excellent': 0,
           'Good': 0,
           'Average': 0,
@@ -224,22 +240,85 @@ class ReportPageState extends State<ReportPage> {
     );
   }
 
+Future<void> _exportDataToExcel() async {
+  var excel = Excel.createExcel();
+  Sheet sheetObject = excel['Sheet1'];
+
+  // Adding headers: Date, Meal Type, Rating, and Count
+  sheetObject.appendRow(['Date', 'Meal Type', 'Rating', 'Count']);
+
+  // Define the meal types to fetch
+  List<String> mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
+
+  // Loop through each meal type and fetch feedback data
+  for (String mealType in mealTypes) {
+    // Fetch feedback data from Firestore for the selected date and meal type
+    final feedbackSnapshot = await FirebaseFirestore.instance
+        .collection('feedback')
+        .where('mealType', isEqualTo: mealType)
+        .where('date', isEqualTo: DateFormat('yyyy-MM-dd').format(_selectedDate))
+        .get();
+
+    // Reset the rating counts before export
+    Map<String, int> ratingCounts = {
+      'Excellent': 0,
+      'Good': 0,
+      'Average': 0,
+      'Bad': 0,
+      'Very Bad': 0,
+    };
+
+    // Update rating counts based on feedback documents
+    for (var doc in feedbackSnapshot.docs) {
+      final rating = doc['rating'];
+      if (ratingCounts.containsKey(rating)) {
+        ratingCounts[rating] = ratingCounts[rating]! + 1;
+      }
+    }
+
+    // Append rows for each rating category
+    ratingCounts.forEach((rating, count) {
+      sheetObject.appendRow([
+        DateFormat('yyyy-MM-dd').format(_selectedDate), // Date
+        mealType, // Meal Type (Breakfast, Lunch, or Dinner)
+        rating, // Rating (Excellent, Good, etc.)
+        count.toString(), // Count of ratings
+      ]);
+    });
+  }
+
+  // Save the Excel file to external storage
+  Directory? directory = await getExternalStorageDirectory();
+  String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
+  String outputFilePath = '${directory!.path}/meal_feedback_$formattedDate.xlsx';
+
+  File(outputFilePath)
+    ..createSync(recursive: true)
+    ..writeAsBytesSync(excel.save()!);
+
+  // Show a success message
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Data exported successfully to $outputFilePath'),
+    ),
+  );
+}
+
+
   Color _getBarColor(String rating) {
     switch (rating) {
       case 'Excellent':
-        return const Color.fromARGB(255, 19, 245, 26);
+        return Colors.green;
       case 'Good':
-        return const Color.fromARGB(255, 109, 179, 29);
+        return Colors.blue;
       case 'Average':
         return Colors.yellow;
       case 'Bad':
-        return const Color.fromARGB(255, 255, 153, 0);
+        return Colors.orange;
       case 'Very Bad':
-        return const Color.fromARGB(255, 241, 23, 7);
+        return Colors.red;
       default:
         return Colors.grey;
     }
   }
-  
-  DateFormat(String s) {}
 }
