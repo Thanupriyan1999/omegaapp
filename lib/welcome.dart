@@ -165,7 +165,7 @@ class WelcomePageState extends State<WelcomePage> {
             Text(
               'Omega Line Vavuniya',
               style: TextStyle(
-                fontSize: 30,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: const Color.fromARGB(255, 35, 64, 189),
                 fontFamily: 'Lobster',
@@ -209,7 +209,7 @@ class WelcomePageState extends State<WelcomePage> {
                 child: Text(
                   DateFormat('MMMM').format(DateTime.now()),
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 15,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -219,7 +219,7 @@ class WelcomePageState extends State<WelcomePage> {
               Text(
                 DateFormat('dd').format(DateTime.now()),
                 style: const TextStyle(
-                  fontSize: 40,
+                  fontSize: 30,
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),

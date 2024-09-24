@@ -244,48 +244,48 @@ Future<void> _exportDataToExcel() async {
   var excel = Excel.createExcel();
   Sheet sheetObject = excel['Sheet1'];
 
-  // Adding headers: Date, Meal Type, Rating, and Count
-  sheetObject.appendRow(['Date', 'Meal Type', 'Rating', 'Count']);
+  // Adding headers: Date, Rating, Breakfast, Lunch, Dinner
+  sheetObject.appendRow(['Date', 'Rating', 'Breakfast', 'Lunch', 'Dinner']);
 
-  // Define the meal types to fetch
+  // Define the meal types
   List<String> mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
+
+  // Initialize a map to store rating counts for each meal type
+  Map<String, Map<String, int>> allMealRatings = {
+    'Excellent': {'Breakfast': 0, 'Lunch': 0, 'Dinner': 0},
+    'Good': {'Breakfast': 0, 'Lunch': 0, 'Dinner': 0},
+    'Average': {'Breakfast': 0, 'Lunch': 0, 'Dinner': 0},
+    'Bad': {'Breakfast': 0, 'Lunch': 0, 'Dinner': 0},
+    'Very Bad': {'Breakfast': 0, 'Lunch': 0, 'Dinner': 0},
+  };
 
   // Loop through each meal type and fetch feedback data
   for (String mealType in mealTypes) {
-    // Fetch feedback data from Firestore for the selected date and meal type
     final feedbackSnapshot = await FirebaseFirestore.instance
         .collection('feedback')
         .where('mealType', isEqualTo: mealType)
         .where('date', isEqualTo: DateFormat('yyyy-MM-dd').format(_selectedDate))
         .get();
 
-    // Reset the rating counts before export
-    Map<String, int> ratingCounts = {
-      'Excellent': 0,
-      'Good': 0,
-      'Average': 0,
-      'Bad': 0,
-      'Very Bad': 0,
-    };
-
-    // Update rating counts based on feedback documents
+    // Update the rating counts for each meal type
     for (var doc in feedbackSnapshot.docs) {
       final rating = doc['rating'];
-      if (ratingCounts.containsKey(rating)) {
-        ratingCounts[rating] = ratingCounts[rating]! + 1;
+      if (allMealRatings.containsKey(rating)) {
+        allMealRatings[rating]![mealType] = allMealRatings[rating]![mealType]! + 1;
       }
     }
-
-    // Append rows for each rating category
-    ratingCounts.forEach((rating, count) {
-      sheetObject.appendRow([
-        DateFormat('yyyy-MM-dd').format(_selectedDate), // Date
-        mealType, // Meal Type (Breakfast, Lunch, or Dinner)
-        rating, // Rating (Excellent, Good, etc.)
-        count.toString(), // Count of ratings
-      ]);
-    });
   }
+
+  // Append rows for each rating category (Excellent, Good, etc.)
+  allMealRatings.forEach((rating, mealCounts) {
+    sheetObject.appendRow([
+      DateFormat('yyyy-MM-dd').format(_selectedDate), // Date
+      rating, // Rating (Excellent, Good, etc.)
+      mealCounts['Breakfast'].toString(), // Count for Breakfast
+      mealCounts['Lunch'].toString(),     // Count for Lunch
+      mealCounts['Dinner'].toString(),    // Count for Dinner
+    ]);
+  });
 
   // Save the Excel file to external storage
   Directory? directory = await getExternalStorageDirectory();
@@ -303,6 +303,7 @@ Future<void> _exportDataToExcel() async {
     ),
   );
 }
+
 
 
   Color _getBarColor(String rating) {
